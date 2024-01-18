@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat with Bot</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat" id="chat-box">
+            <!-- Messages will be displayed here -->
+        </div>
+        <div class="input">
+            <input type="text" id="message-input" placeholder="Type a message...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+    
+    <script>
+        // JavaScript for sending and displaying messages
+        const chatBox = document.getElementById('chat-box');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+
+        function appendMessage(sender, message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            messageDiv.innerHTML = `<strong>${sender}:</strong> ${message}`;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        sendButton.addEventListener('click', () => {
+            const userMessage = messageInput.value;
+            appendMessage('You', userMessage);
+
+            // Send the user's message to the server
+            fetch('/send_message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: userMessage })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const botResponse = data.response;
+                appendMessage('Bot', botResponse);
+            });
+
+            messageInput.value = '';
+        });
+
+        // Load initial messages
+        fetch('/get_messages')
+        .then(response => response.json())
+        .then(data => {
+            const messages = data.messages;
+            messages.forEach(message => {
+                appendMessage(message.user, message.response);
+            });
+        });
+    </script>
+</body>
+</html>
